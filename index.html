@@ -1,363 +1,150 @@
 <!DOCTYPE html>
-
 <html lang="en">
-
 <head>
-
   <meta charset="UTF-8">
-
   <meta name="viewport" content="width=device-width, initial-scale=1.0">
-
-  <meta name="theme-color" content="#eaf4ff">
-
-  <title>PAQSAFE — Detect. Monitor. Protect.</title>
-
+  <meta name="theme-color" content="#e9f5f6">
+  <title>PAQSAFE | Detect. Monitor. Protect.</title>
   <link rel="preconnect" href="https://fonts.googleapis.com">
-
   <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-
-  <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&family=Manrope:wght@300;400;500;600;700&display=swap" rel="stylesheet">
-
+  <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@400;500;600;700&family=Manrope:wght@400;500;600;700;800&display=swap" rel="stylesheet">
   <link rel="stylesheet" href="style.css">
-
 </head>
-
 <body>
-
-  <div id="splash" class="splash">
-
-    <div class="splash-logo"><span class="logo-orbit">P</span><span class="brand-word">PAQSAFE</span></div>
-
-    <p>Detect. Monitor. Protect.</p>
-
-    <div class="loading-track"><span></span></div>
-
-    <small>Preparing your workspace…</small>
-
-  </div>
-
- 
-
-  <div class="app-shell" id="appShell">
-
-    <aside class="sidebar">
-
-      <a class="brand" href="#" data-page="home" aria-label="PAQSAFE Home">
-
-        <span class="logo-mark" aria-hidden="true"><span class="logo-p">P</span><span class="orbit orbit-a"></span><span class="orbit orbit-b"></span><span class="logo-star">✦</span></span>
-
-        <span class="brand-word">PAQSAFE</span>
-
-        <span class="brand-tag">Detect. Monitor. Protect.</span>
-
+  <div class="app-shell">
+    <aside class="sidebar" id="sidebar">
+      <a class="brand" href="#home" aria-label="PAQSAFE home">
+        <span class="brand-mark">P</span>
+        <span class="brand-name">PAQSAFE<small>DETECT. MONITOR. PROTECT.</small></span>
       </a>
-
- 
-
-      <nav class="nav-list" aria-label="Main navigation">
-
-        <button class="nav-item active" data-page="home"><span class="nav-icon">⌂</span>Home</button>
-
-        <button class="nav-item" data-page="registry"><span class="nav-icon">▣</span>Parcel Registry</button>
-
-        <button class="nav-item" data-page="monitor"><span class="nav-icon">⌖</span>Parcel Monitor</button>
-
-        <button class="nav-item" data-page="water"><span class="nav-icon">♢</span>Water Protection</button>
-
-        <button class="nav-item" data-page="risk"><span class="nav-icon">◈</span>Risk Center <span class="nav-sub">& Activity Log</span></button>
-
-        <button class="nav-item" data-page="analytics"><span class="nav-icon">▥</span>Analytics <span class="nav-sub">& Diagnostics</span></button>
-
-        <button class="nav-item" data-page="discover"><span class="nav-icon">⌕</span>Discover</button>
-
-        <button class="nav-item" data-page="about"><span class="nav-icon">ⓘ</span>About Us</button>
-
-        <button class="nav-item" data-page="device"><span class="nav-icon">↔</span>Device Connection</button>
-
-        <button class="nav-item" data-page="settings"><span class="nav-icon">⚙</span>Settings</button>
-
+      <div class="side-label">WORKSPACE</div>
+      <nav class="main-nav" aria-label="Main navigation">
+        <a href="#home" data-page="home" class="nav-link active"><span class="nav-icon">⌂</span>Overview</a>
+        <a href="#registry" data-page="registry" class="nav-link"><span class="nav-icon">▣</span>Parcel Registry</a>
+        <a href="#monitor" data-page="monitor" class="nav-link"><span class="nav-icon">◉</span>Parcel Monitor</a>
+        <a href="#risk" data-page="risk" class="nav-link"><span class="nav-icon">◇</span>Risk Center</a>
+        <a href="#analytics" data-page="analytics" class="nav-link"><span class="nav-icon">▥</span>Analytics</a>
+        <div class="side-label side-label-spaced">PAQSAFE</div>
+        <a href="#discover" data-page="discover" class="nav-link"><span class="nav-icon">✧</span>Discover</a>
+        <a href="#about" data-page="about" class="nav-link"><span class="nav-icon">ⓘ</span>About Us</a>
+        <a href="#device" data-page="device" class="nav-link"><span class="nav-icon">⌁</span>Device Connection</a>
+        <a href="#feedback" data-page="feedback" class="nav-link"><span class="nav-icon">✉</span>Feedback</a>
+        <a href="#settings" data-page="settings" class="nav-link"><span class="nav-icon">⚙</span>Settings</a>
       </nav>
-
- 
-
       <div class="sidebar-bottom">
-
-        <div class="mini-parcel" aria-hidden="true"><div class="mini-box"></div><div class="mini-ring"></div></div>
-
-        <p>Smarter delivery.<br><strong>Safer parcels.</strong></p>
-
-        <div class="connection-chip"><span class="status-dot" id="sideDot"></span><span id="sideConnection">Demo mode</span></div>
-
+        <div class="mini-device"><span class="pulse-dot" id="sideDot"></span><div><strong id="sideConnection">Device offline</strong><small>Parcel #001 · Arduino UNO</small></div></div>
+        <div class="sidebar-foot">PAQSAFE PROTOTYPE <span>v2.0</span></div>
       </div>
-
     </aside>
 
- 
-
     <main class="main-area">
-
       <header class="topbar">
-
-        <div class="search-wrap"><span>⌕</span><input id="globalSearch" type="search" placeholder="Search parcels…" aria-label="Search parcels"></div>
-
-        <div class="top-actions">
-
-          <div class="system-pill"><span class="status-dot" id="systemDot"></span><span id="systemStatus">Demo Mode</span></div>
-
-          <button class="icon-button" id="alertsButton" aria-label="Show alerts">♧<span class="alert-count" id="alertCount">0</span></button>
-
-          <button class="profile-button" id="profileButton" aria-label="Profile menu">P⌄</button>
-
-        </div>
-
+        <button class="mobile-menu" id="menuBtn" aria-label="Open menu">☰</button>
+        <div><div class="crumb">PAQSAFE <span>/</span> <b id="pageCrumb">Overview</b></div><div class="top-subtitle">Parcel protection and monitoring workspace</div></div>
+        <div class="top-actions"><span class="system-chip"><i id="topDot"></i><span id="topConnection">Device offline</span></span><button class="avatar" title="PAQSAFE">P</button></div>
       </header>
 
- 
-
-      <section class="page active" id="page-home">
-
-        <div class="home-grid">
-
-          <section class="hero card">
-
-            <div class="hero-copy">
-
-              <p class="eyebrow">PARCEL PROTECTION SYSTEM</p>
-
-              <h1>Welcome to PAQSAFE.</h1>
-
-              <p>Monitor your parcels and help keep them safe from water exposure.</p>
-
-              <button class="primary-button" data-page="registry">View parcels <span>→</span></button>
-
-            </div>
-
-            <div class="hero-visual" aria-hidden="true">
-
-              <div class="hero-orbit"></div><div class="hero-shield">✓</div>
-
-              <div class="package"><div class="package-tape"></div><div class="package-label"></div></div>
-
-            </div>
-
-          </section>
-
- 
-
-          <section class="summary-grid">
-
-            <div class="summary-card"><span class="summary-icon blue">▣</span><span>Total parcels</span><strong id="totalCount">0</strong></div>
-
-            <div class="summary-card"><span class="summary-icon green">✓</span><span>Protected</span><strong id="safeCount">0</strong></div>
-
-            <div class="summary-card"><span class="summary-icon orange">!</span><span>At risk</span><strong id="riskCount">0</strong></div>
-
-            <div class="summary-card"><span class="summary-icon blue">⌁</span><span>Devices</span><strong id="deviceCount">0</strong></div>
-
-          </section>
-
- 
-
-          <section class="card parcels-panel">
-
-            <div class="section-heading"><div><h2>Your parcels</h2><p>Overview of registered parcels</p></div><button class="text-button" data-page="registry">View all →</button></div>
-
-            <div class="parcel-grid" id="homeParcelGrid"></div>
-
-          </section>
-
- 
-
-          <section class="card risk-panel">
-
-            <div class="section-heading"><h2>Risk overview</h2><span class="live-pill"><span class="status-dot"></span>Overview</span></div>
-
-            <div class="risk-content"><div class="donut" id="riskDonut"><div><strong id="safePercent">0%</strong><small>Safe</small></div></div>
-
-              <div class="risk-legend"><div><span class="legend-dot green"></span>Safe <strong id="legendSafe">0</strong></div><div><span class="legend-dot orange"></span>Warnings <strong id="legendWarn">0</strong></div><div><span class="legend-dot red"></span>Critical <strong id="legendCritical">0</strong></div></div></div>
-
-          </section>
-
- 
-
-          <section class="card activity-panel">
-
-            <div class="section-heading"><h2>Activity log</h2><button class="text-button" data-page="risk">View all →</button></div>
-
-            <div id="homeActivity" class="activity-list"></div>
-
-          </section>
-
- 
-
-          <section class="card analytics-preview">
-
-            <div class="section-heading"><div><h2>Parcel analytics</h2><p>Session readings</p></div><div class="range-buttons"><button class="active" data-range="session">Session</button></div></div>
-
-            <div class="chart-legend"><span><i class="legend-line blue"></i>Distance</span><span><i class="legend-line aqua"></i>Water</span></div>
-
-            <canvas id="homeChart" height="180"></canvas>
-
-            <button class="text-button" data-page="analytics">Open analytics →</button>
-
-          </section>
-
- 
-
-          <section class="card diagnostics-preview">
-
-            <div class="section-heading"><h2>System diagnostics</h2><button class="text-button" data-page="analytics">Details →</button></div>
-
-            <div class="diagnostic-row"><span>Sensor status</span><strong id="sensorDiagnostic"><span class="status-dot gray"></span>Not connected</strong></div>
-
-            <div class="diagnostic-row"><span>Connection</span><strong id="connectionDiagnostic">Demo</strong></div>
-
-            <div class="diagnostic-row"><span>Last check</span><strong id="lastCheck">—</strong></div>
-
-            <div class="diagnostic-row"><span>Serial data</span><strong id="serialDiagnostic">Waiting</strong></div>
-
-          </section>
-
- 
-
-          <section class="card discover-banner">
-
-            <div><p class="eyebrow">LEARN ABOUT THE PROJECT</p><h2>Discover PAQSAFE</h2><p>Explore our project, technology and future plans.</p><button class="primary-button" data-page="discover">Explore →</button></div>
-
-            <div class="banner-package" aria-hidden="true"><div class="package small"></div></div>
-
-          </section>
-
-        </div>
-
-      </section>
-
- 
-
-      <section class="page" id="page-registry">
-
-        <div class="page-title-row"><div><p class="eyebrow">MANAGEMENT</p><h1>Parcel Registry</h1><p>Register and manage parcels in your system.</p></div><button class="primary-button" id="addParcelButton">＋ Add parcel</button></div>
-
-        <section class="card"><div class="toolbar"><input id="registrySearch" type="search" placeholder="Search by parcel ID or name…"><select id="registryFilter"><option value="all">All statuses</option><option value="safe">Safe</option><option value="warning">Warning</option><option value="empty">Empty</option><option value="critical">Critical</option></select></div><div class="registry-list" id="registryList"></div></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-monitor">
-
-        <div class="page-title-row"><div><p class="eyebrow">LIVE MONITORING</p><h1>Parcel Monitor</h1><p>View the selected parcel's sensor state.</p></div><select id="monitorParcelSelect" aria-label="Select parcel"></select></div>
-
-        <div class="monitor-grid">
-
-          <section class="card monitor-visual"><div class="scan-label">PARCEL SCAN <span class="status-dot blue"></span></div><div class="scan-frame"><div class="scan-line"></div><div class="package large"><div class="package-tape"></div><div class="package-label"></div></div></div><p id="monitorStatusText">Connect the Arduino to receive real readings.</p></section>
-
-          <section class="card monitor-stats"><div class="metric"><span>Distance</span><strong id="distanceValue">— <small>cm</small></strong><p>Ultrasonic sensor</p></div><div class="metric"><span>Water sensor</span><strong id="waterValue">—</strong><p>Moisture detection</p></div><div class="metric"><span>Parcel status</span><strong id="parcelStatusValue">—</strong><p>Derived from sensors</p></div><div class="metric"><span>Last reading</span><strong id="monitorLastRead">—</strong><p>Serial input</p></div></section>
-
-        </div>
-
-      </section>
-
- 
-
-      <section class="page" id="page-water">
-
-        <div class="page-title-row"><div><p class="eyebrow">ENVIRONMENT MONITORING</p><h1>Water Protection</h1><p>Monitor water sensor readings and parcel exposure.</p></div></div>
-
-        <section class="water-grid"><div class="card water-main"><div class="water-icon">◉</div><p>Water sensor state</p><h2 id="waterPageState">Awaiting data</h2><span id="waterPageDescription">Connect your Arduino to begin.</span></div><div class="card"><h2>Detection guide</h2><div class="guide-row"><span class="guide-swatch dry"></span><div><strong>Dry</strong><p>Sensor is not detecting water.</p></div></div><div class="guide-row"><span class="guide-swatch wet"></span><div><strong>Wet</strong><p>Water has been detected at the sensor.</p></div></div><p class="note">Sensor thresholds must be calibrated for your specific hardware.</p></div></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-risk">
-
-        <div class="page-title-row"><div><p class="eyebrow">SAFETY OVERVIEW</p><h1>Risk Center</h1><p>Review parcel status and recent events.</p></div></div>
-
-        <section class="card risk-center-card"><div class="risk-center-summary"><div class="donut big" id="riskDonutBig"><div><strong id="riskCenterPercent">0%</strong><small>Safe</small></div></div><div class="risk-tiles"><div class="risk-tile green"><span>Safe</span><strong id="riskCenterSafe">0</strong></div><div class="risk-tile orange"><span>Warning</span><strong id="riskCenterWarn">0</strong></div><div class="risk-tile red"><span>Critical</span><strong id="riskCenterCritical">0</strong></div></div></div><h2>Recent alerts</h2><div id="riskAlerts" class="activity-list"></div></section>
-
-        <section class="card expandable"><button class="expand-button" id="activityExpand"><span><strong>Activity Log</strong><small>All recorded events</small></span><span id="expandArrow">⌄</span></button><div class="expand-content hidden" id="activityExpanded"><div class="activity-toolbar"><button class="text-button" id="clearActivity">Clear demo log</button></div><div id="fullActivity" class="activity-list"></div></div></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-analytics">
-
-        <div class="page-title-row"><div><p class="eyebrow">DATA & PERFORMANCE</p><h1>Analytics & Diagnostics</h1><p>Visualise sensor data and check system health.</p></div></div>
-
-        <section class="card analytics-full"><div class="section-heading"><h2>Distance readings</h2><span class="live-pill">Session data</span></div><canvas id="analyticsChart" height="250"></canvas><div class="chart-legend"><span><i class="legend-line blue"></i>Distance (cm)</span></div></section>
-
-        <section class="card diagnostics-full"><div class="section-heading"><h2>System Diagnostics</h2><button class="text-button" id="diagnosticsRefresh">Refresh checks</button></div><div class="diagnostics-grid"><div class="diagnostic-card"><span>Arduino connection</span><strong id="diagConnection">Not connected</strong></div><div class="diagnostic-card"><span>Ultrasonic sensor</span><strong id="diagUltrasonic">Waiting</strong></div><div class="diagnostic-card"><span>Water sensor</span><strong id="diagWater">Waiting</strong></div><div class="diagnostic-card"><span>Serial data format</span><strong id="diagFormat">Waiting</strong></div><div class="diagnostic-card"><span>Browser support</span><strong id="diagBrowser">Checking…</strong></div><div class="diagnostic-card"><span>Last received</span><strong id="diagLast">—</strong></div></div><p class="note">Diagnostics report what this browser has received. They cannot verify the physical sensor's accuracy.</p></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-discover">
-
-        <div class="page-title-row"><div><p class="eyebrow">LEARN & EXPLORE</p><h1>Discover PAQSAFE</h1><p>Learn about the project and how the system works.</p></div></div>
-
-        <div class="discover-grid"><article class="card discover-card"><div class="discover-symbol">▣</div><h2>How it works</h2><p>The ultrasonic sensor checks parcel presence and the water sensor checks for water exposure. The readings are processed by the Arduino and shown on the website.</p></article><article class="card discover-card"><div class="discover-symbol">⌁</div><h2>Our technology</h2><p>Arduino UNO, ultrasonic distance sensing, a water sensor, serial communication and a browser interface.</p></article><article class="card discover-card"><div class="discover-symbol">◇</div><h2>Protection guide</h2><p>Keep electronics dry, position the water sensor where exposure can be detected, and test the setup carefully before demonstrations.</p></article></div>
-
-        <section class="card faq"><h2>Frequently asked questions</h2><details><summary>Does PAQSAFE track a parcel's delivery route?</summary><p>No. This prototype monitors parcel presence and water exposure locally. It does not provide courier GPS tracking.</p></details><details><summary>Does the website work without an ESP32?</summary><p>Yes. The website can connect to the Arduino UNO over USB using Web Serial in a supported browser. Wi-Fi is not required for this connection.</p></details><details><summary>Are the dashboard values real?</summary><p>Values marked Demo are illustrative. Real readings appear only after a compatible serial connection is made.</p></details><details><summary>Is this a commercial product?</summary><p>No. PAQSAFE is a student-developed prototype for educational purposes.</p></details></section>
-
-        <section class="card feedback"><h2>Feedback</h2><p>Share your suggestions about this prototype.</p><form id="feedbackForm"><label>Your feedback<textarea id="feedbackText" required placeholder="What could we improve?"></textarea></label><button class="primary-button" type="submit">Save feedback locally</button><small>Feedback is stored only in this browser. It is not sent to a server.</small></form><div id="feedbackSaved" class="success-message hidden">Feedback saved in this browser.</div></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-about">
-
-        <div class="page-title-row"><div><p class="eyebrow">THE STORY BEHIND THE PROJECT</p><h1>About Us</h1><p>Five students. One idea. A bigger purpose.</p></div></div>
-
-        <section class="card about-story"><h2>Why we started</h2><p>We are a group of five high school students who began this project as part of a school assignment. At first, we were simply looking for an idea that would help us complete the project. But we wanted to go beyond making something just for grades — we wanted to build something useful.</p><p>After scrapping our original idea, we found a problem that felt worth addressing: parcels can be damaged when exposed to water. We decided to explore a passive protection and monitoring system that could help identify parcel presence and water exposure.</p><p>PAQSAFE began as an assignment, but along the way we found an interest in designing, testing and improving a solution. We have put a lot of effort into developing the concept while keeping affordability and accessibility in mind.</p></section>
-
-        <section class="card timeline"><h2>Project timeline</h2><div class="timeline-list"><div><span class="timeline-dot"></span><strong>Original idea</strong><p>Started with the first project concept.</p></div><div><span class="timeline-dot"></span><strong>New direction</strong><p>Scrapped the original concept and chose parcel protection.</p></div><div><span class="timeline-dot"></span><strong>Prototype</strong><p>Built the sensor circuit and started the website.</p></div><div><span class="timeline-dot"></span><strong>Testing & improvement</strong><p>Calibrating sensors and improving the interface.</p></div></div></section>
-
-        <section class="card future"><h2>Future ideas</h2><ul><li>Support more sensors and parcels.</li><li>Improve reliability and calibration.</li><li>Explore notifications and better accessibility.</li><li>Develop a smaller, more affordable design.</li><li>Investigate future development and intellectual-property options.</li></ul></section>
-
-        <div class="disclaimer"><strong>Student prototype disclaimer</strong><p>PAQSAFE is designed and developed by five students. It may have limitations or imperfections and is intended for educational purposes only. It is not a commercial product. Any future commercial use would require further development and appropriate legal and intellectual-property review.</p></div>
-
-      </section>
-
- 
-
-      <section class="page" id="page-device">
-
-        <div class="page-title-row"><div><p class="eyebrow">HARDWARE</p><h1>Device Connection</h1><p>Connect your Arduino UNO through USB serial.</p></div></div>
-
-        <section class="card device-card"><div class="device-status"><span class="status-dot" id="deviceStatusDot"></span><strong id="deviceStatusText">Not connected</strong></div><p>Use Chrome or Edge on HTTPS or localhost. Close Arduino Serial Monitor before connecting.</p><button class="primary-button" id="connectButton">Connect Arduino</button><button class="secondary-button" id="disconnectButton" disabled>Disconnect</button><div class="serial-console"><div class="console-header">Serial console <button id="clearConsole">Clear</button></div><pre id="serialConsole">Waiting for connection…</pre></div><p class="note">Accepted serial formats: JSON like <code>{"distance":12.5,"water":"dry"}</code> or CSV like <code>12.5,dry</code>. Baud rate: 9600.</p></section>
-
-      </section>
-
- 
-
-      <section class="page" id="page-settings">
-
-        <div class="page-title-row"><div><p class="eyebrow">PERSONALIZE</p><h1>Settings</h1><p>Customize your PAQSAFE experience.</p></div></div>
-
-        <section class="card settings-card"><div class="setting-row"><div><strong>Appearance</strong><p>Choose how PAQSAFE looks.</p></div><select id="themeSetting"><option value="system">System</option><option value="light">Light</option><option value="dark">Dark</option></select></div><div class="setting-row"><div><strong>Reduced motion</strong><p>Reduce decorative movement and transitions.</p></div><label class="toggle"><input id="motionSetting" type="checkbox"><span></span></label></div><div class="setting-row"><div><strong>Notifications</strong><p>Show in-app alerts for sensor events.</p></div><label class="toggle"><input id="notificationsSetting" type="checkbox" checked><span></span></label></div><div class="setting-row"><div><strong>Display units</strong><p>Distance measurement.</p></div><select id="unitsSetting"><option value="cm">Centimetres (cm)</option><option value="in">Inches (in)</option></select></div><div class="setting-row"><div><strong>Compact layout</strong><p>Reduce spacing across cards.</p></div><label class="toggle"><input id="compactSetting" type="checkbox"><span></span></label></div><div class="setting-row"><div><strong>Demo data</strong><p>Use illustrative parcels until hardware is connected.</p></div><label class="toggle"><input id="demoSetting" type="checkbox" checked><span></span></label></div><button class="primary-button" id="saveSettings">Save settings</button><button class="secondary-button" id="resetSettings">Reset settings</button></section>
-
-      </section>
-
- 
-
-      <footer class="app-footer">PAQSAFE · Detect. Monitor. Protect. <span>Student prototype · Educational use only</span></footer>
-
+      <div class="page-wrap">
+        <!-- OVERVIEW -->
+        <section class="page active" id="page-home">
+          <div class="welcome-banner">
+            <div class="welcome-copy"><p class="eyebrow">PARCEL MONITORING SYSTEM</p><h1>Protection that<br><em>keeps you informed.</em></h1><p>One live monitoring parcel, with two clearly marked sample parcels for demonstration.</p><a class="button button-light" href="#registry">Explore parcels <span>↗</span></a></div>
+            <div class="banner-illustration" aria-hidden="true"><div class="banner-ring"></div><div class="banner-box"><b>PAQ</b><small>SAFE</small></div><span class="banner-spark spark-a"></span><span class="banner-spark spark-b"></span></div>
+          </div>
+          <div class="section-title-row"><div><p class="eyebrow">AT A GLANCE</p><h2>Workspace overview</h2></div><span class="updated-label" id="overviewUpdated">Waiting for device data</span></div>
+          <div class="stats-grid">
+            <article class="stat-card"><div class="stat-icon aqua">▣</div><span class="stat-label">Registered parcels</span><strong id="parcelCount">3</strong><small>1 live · 2 demo</small></article>
+            <article class="stat-card"><div class="stat-icon lavender">⌁</div><span class="stat-label">Device connection</span><strong class="stat-word" id="overviewConnection">Offline</strong><small id="overviewConnectionHint">Connect Arduino by USB</small></article>
+            <article class="stat-card"><div class="stat-icon blue">↔</div><span class="stat-label">Latest distance</span><strong id="overviewDistance">—</strong><small>cm · Parcel #001 only</small></article>
+            <article class="stat-card"><div class="stat-icon peach">◉</div><span class="stat-label">Water sensor</span><strong class="stat-word" id="overviewWater">No data</strong><small id="overviewWaterHint">Waiting for readings</small></article>
+          </div>
+          <div class="content-grid">
+            <article class="panel panel-wide"><div class="panel-heading"><div><p class="eyebrow">PARCEL STATUS</p><h3>Your parcels</h3></div><a class="text-link" href="#registry">View registry →</a></div><div id="homeParcelList" class="home-parcel-list"></div></article>
+            <article class="panel"><div class="panel-heading"><div><p class="eyebrow">DEVICE ACTIVITY</p><h3>Connection</h3></div><span class="soft-tag">USB SERIAL</span></div><div class="connection-summary"><span class="connection-large-icon">⌁</span><strong id="homeDeviceStatus">Not connected</strong><p id="homeDeviceDescription">Connect the Arduino UNO to begin receiving sensor readings.</p><a href="#device" class="button button-primary button-full">Open device connection</a></div></article>
+          </div>
+          <div class="notice"><span class="notice-symbol">i</span><p><b>Data transparency:</b> Parcel #001 uses real readings from the connected Arduino. Parcel #002 and #003 are demo-only examples and never display live sensor measurements.</p></div>
+        </section>
+
+        <!-- REGISTRY -->
+        <section class="page" id="page-registry">
+          <div class="page-heading"><div><p class="eyebrow">PARCEL MANAGEMENT</p><h1>Parcel Registry</h1><p>Manage parcel records and see which parcel is paired with the monitoring device.</p></div><button class="button button-primary" id="addParcelBtn">＋ Add parcel</button></div>
+          <div class="toolbar"><label class="searchbox">⌕ <input id="parcelSearch" type="search" placeholder="Search parcel ID or name"></label><span class="soft-tag">LIVE DEVICE: #001</span></div>
+          <div class="registry-grid" id="registryGrid"></div>
+          <p class="footnote">New parcels are saved in this browser. They are not automatically connected to physical sensors. This prototype assigns the Arduino to Parcel #001 only.</p>
+        </section>
+
+        <!-- MONITOR -->
+        <section class="page" id="page-monitor">
+          <div class="page-heading"><div><p class="eyebrow">LIVE SENSOR DATA</p><h1>Parcel Monitor</h1><p>Actual sensor readings received from the Arduino UNO assigned to Parcel #001.</p></div><span class="status-pill" id="monitorStatus">NOT CONNECTED</span></div>
+          <div class="monitor-banner"><div><span class="parcel-label">MONITORED PARCEL</span><h2>Parcel #001</h2><p>Arduino UNO · HC-SR04 · Water sensor</p></div><div class="monitor-id">DEVICE 01 <span id="monitorDeviceDot"></span></div></div>
+          <div class="monitor-grid">
+            <article class="panel sensor-panel"><div class="sensor-top"><span class="sensor-icon">↔</span><span class="soft-tag">HC-SR04</span></div><p class="sensor-label">Measured distance</p><div class="sensor-reading"><strong id="monitorDistance">—</strong><span>cm</span></div><p class="sensor-caption">Latest valid ultrasonic reading</p></article>
+            <article class="panel sensor-panel"><div class="sensor-top"><span class="sensor-icon water-icon">◉</span><span class="soft-tag">WATER SENSOR</span></div><p class="sensor-label">Raw sensor value</p><div class="sensor-reading"><strong id="monitorWaterRaw">—</strong><span>/ 1023</span></div><p class="sensor-caption" id="monitorWaterStatus">Waiting for sensor data</p></article>
+            <article class="panel sensor-panel"><div class="sensor-top"><span class="sensor-icon shield-icon">◇</span><span class="soft-tag">RISK STATUS</span></div><p class="sensor-label">Water detection</p><div class="sensor-reading"><strong class="status-reading" id="monitorRisk">Unknown</strong></div><p class="sensor-caption">Calculated from the configured threshold</p></article>
+          </div>
+          <article class="panel monitor-lower"><div class="panel-heading"><div><p class="eyebrow">READING DETAILS</p><h3>Latest device information</h3></div></div><div class="detail-list"><div><span>Assigned parcel</span><b>Parcel #001</b></div><div><span>Connection</span><b id="monitorConnectionDetail">Disconnected</b></div><div><span>Last reading</span><b id="monitorLastReading">No reading received</b></div><div><span>Water threshold</span><b id="monitorThreshold">500</b></div></div><p class="footnote">A dash means no valid reading has been received. No sample or estimated sensor values are inserted into this page.</p></article>
+        </section>
+
+        <!-- RISK -->
+        <section class="page" id="page-risk">
+          <div class="page-heading"><div><p class="eyebrow">EVENTS AND ALERTS</p><h1>Risk Center</h1><p>Review real sensor events from Parcel #001. Demo parcels do not create device alerts.</p></div><button class="button button-secondary" id="clearLogBtn">Clear activity log</button></div>
+          <div class="risk-summary"><div class="risk-emblem">◇</div><div><span class="eyebrow">CURRENT SENSOR ASSESSMENT</span><h2 id="riskHeadline">Waiting for sensor data</h2><p id="riskDescription">Connect the Arduino to assess water sensor readings for Parcel #001.</p></div></div>
+          <article class="panel"><div class="panel-heading"><div><p class="eyebrow">DEVICE EVENTS</p><h3>Activity log</h3></div><span class="soft-tag">SESSION ONLY</span></div><div id="activityLog" class="activity-log"><div class="empty-state">No device events recorded yet.</div></div></article>
+        </section>
+
+        <!-- ANALYTICS -->
+        <section class="page" id="page-analytics">
+          <div class="page-heading"><div><p class="eyebrow">SESSION INSIGHTS</p><h1>Analytics</h1><p>Graphs are built only from actual readings received during this browser session.</p></div><span class="soft-tag">LIVE SESSION</span></div>
+          <div class="stats-grid analytics-stats"><article class="stat-card"><span class="stat-label">Valid readings</span><strong id="analyticsCount">0</strong><small>Parcel #001</small></article><article class="stat-card"><span class="stat-label">Latest distance</span><strong id="analyticsDistance">—</strong><small>cm</small></article><article class="stat-card"><span class="stat-label">Latest water value</span><strong id="analyticsWater">—</strong><small>raw / 1023</small></article><article class="stat-card"><span class="stat-label">Session status</span><strong class="stat-word" id="analyticsConnection">Offline</strong><small>Arduino USB</small></article></div>
+          <div class="content-grid analytics-grid"><article class="panel panel-wide"><div class="panel-heading"><div><p class="eyebrow">ULTRASONIC SENSOR</p><h3>Distance history</h3></div><span class="soft-tag">CM</span></div><div class="chart-wrap"><canvas id="distanceChart" height="210" aria-label="Distance readings chart"></canvas><div id="distanceEmpty" class="chart-empty">Connect Arduino to collect real readings.</div></div></article><article class="panel"><div class="panel-heading"><div><p class="eyebrow">WATER SENSOR</p><h3>Raw value history</h3></div><span class="soft-tag">0–1023</span></div><div class="chart-wrap"><canvas id="waterChart" height="210"></canvas><div id="waterEmpty" class="chart-empty">No sensor data yet.</div></div></article></div>
+          <p class="footnote">Charts reset when the page is refreshed. No fabricated history is displayed.</p>
+        </section>
+
+        <!-- DISCOVER -->
+        <section class="page" id="page-discover">
+          <div class="page-heading"><div><p class="eyebrow">GET TO KNOW PAQSAFE</p><h1>Discover</h1><p>A simple look at how the parcel-monitoring prototype works.</p></div></div>
+          <div class="discover-hero"><div><p class="eyebrow">HOW IT WORKS</p><h2>Sense. Send. Understand.</h2><p>Physical sensors collect information around a parcel. The Arduino sends those measurements to the browser over USB, where PAQSAFE presents them clearly.</p></div><div class="discover-mark">P<span>Q</span></div></div>
+          <div class="steps-grid"><article class="panel step-card"><span>01</span><h3>Detect</h3><p>HC-SR04 measures distance. The water sensor provides an analog reading.</p></article><article class="panel step-card"><span>02</span><h3>Transmit</h3><p>The Arduino UNO sends a JSON line through its USB serial connection.</p></article><article class="panel step-card"><span>03</span><h3>Monitor</h3><p>PAQSAFE displays the received values and evaluates the water threshold.</p></article></div>
+          <article class="panel faq-panel"><div class="panel-heading"><div><p class="eyebrow">QUICK HELP</p><h3>Frequently asked questions</h3></div></div><details><summary>Does PAQSAFE need an ESP32?</summary><p>No. This version uses a USB serial connection from the Arduino UNO to Chrome or Edge. An ESP32 is not required for this connection method.</p></details><details><summary>Why are Parcels #002 and #003 marked demo?</summary><p>Only one Arduino and one sensor pair are currently configured. The other two cards are visual examples and have no physical sensor connection.</p></details><details><summary>Why are readings blank?</summary><p>The website has not received a valid Arduino reading yet. Check the USB cable, selected serial port, baud rate and Arduino sketch. Close Arduino IDE Serial Monitor before connecting the website.</p></details><details><summary>Can I change the water threshold?</summary><p>Yes. Change it in Settings. PAQSAFE calculates the displayed water status from the raw sensor value received from the Arduino.</p></details></article>
+        </section>
+
+        <!-- ABOUT -->
+        <section class="page" id="page-about">
+          <div class="page-heading"><div><p class="eyebrow">ABOUT THE PROJECT</p><h1>About PAQSAFE</h1><p>A parcel monitoring concept focused on making sensor information easier to understand.</p></div></div>
+          <div class="about-card"><div class="about-logo">P</div><div><p class="eyebrow">DETECT. MONITOR. PROTECT.</p><h2>Making parcel monitoring more visible.</h2><p>PAQSAFE is a prototype that combines basic electronic sensors, an Arduino UNO and a browser dashboard. The aim is to demonstrate how live measurements can be presented alongside parcel records.</p></div></div>
+          <div class="about-columns"><article class="panel"><p class="eyebrow">CURRENT PROTOTYPE</p><h3>What is included</h3><ul><li>Arduino UNO USB serial connection</li><li>HC-SR04 distance sensor</li><li>Analog water sensor</li><li>Parcel registry with one live device parcel</li><li>Session-only reading analytics</li></ul></article><article class="panel"><p class="eyebrow">IMPORTANT LIMITATION</p><h3>Prototype disclaimer</h3><p>This is an educational prototype, not a certified shipping-security product. Sensor readings depend on placement, wiring, calibration and the environment. The distance sensor does not identify a parcel by itself.</p></article></div>
+        </section>
+
+        <!-- DEVICE -->
+        <section class="page" id="page-device">
+          <div class="page-heading"><div><p class="eyebrow">USB SERIAL SETUP</p><h1>Device Connection</h1><p>Pair the Arduino UNO with Parcel #001 using Web Serial in Chrome or Edge.</p></div><span class="soft-tag">PARCEL #001</span></div>
+          <div class="device-layout">
+            <article class="panel device-connect-card"><div class="device-illustration">⌁</div><p class="eyebrow">ARDUINO UNO</p><h2 id="devicePageStatus">Not connected</h2><p class="muted">Connect the board using a USB data cable. The browser will ask you to choose a serial port.</p><div class="device-buttons"><button class="button button-primary" id="deviceConnectBtn">Connect Arduino</button><button class="button button-secondary" id="deviceDisconnectBtn" disabled>Disconnect</button></div><p class="connection-message" id="devicePageMessage">Ready to connect. Close Arduino Serial Monitor first.</p></article>
+            <article class="panel"><div class="panel-heading"><div><p class="eyebrow">CONNECTION CHECKLIST</p><h3>Before connecting</h3></div></div><ol class="check-list"><li>Plug Arduino UNO into your computer using USB.</li><li>Upload the PAQSAFE Arduino sketch.</li><li>Select Arduino UNO and the correct COM port in Arduino IDE when uploading.</li><li>Close Serial Monitor and Serial Plotter.</li><li>Open this website over HTTPS in Chrome or Edge.</li><li>Click Connect Arduino and select the serial device.</li></ol><div class="notice compact-notice"><span class="notice-symbol">i</span><p>GitHub Pages uses HTTPS. Web Serial is not available in every browser. The browser and Arduino IDE Serial Monitor cannot normally share the same port at once.</p></div></article>
+          </div>
+          <article class="panel wiring-panel"><div class="panel-heading"><div><p class="eyebrow">WIRING REFERENCE</p><h3>Arduino UNO pin connections</h3></div><span class="soft-tag">9600 BAUD</span></div><div class="wiring-table"><div class="wiring-row wiring-head"><span>Component</span><span>Sensor pin</span><span>Arduino pin</span></div><div class="wiring-row"><b>HC-SR04</b><span>VCC / GND</span><strong>5V / GND</strong></div><div class="wiring-row"><b>HC-SR04</b><span>TRIG / ECHO</span><strong>D9 / D10</strong></div><div class="wiring-row"><b>Water sensor</b><span>+ / − / S</span><strong>5V / GND / A0</strong></div></div></article>
+        </section>
+
+        <!-- FEEDBACK -->
+        <section class="page" id="page-feedback">
+          <div class="page-heading"><div><p class="eyebrow">HELP US IMPROVE</p><h1>Feedback</h1><p>Send a comment about the PAQSAFE prototype.</p></div></div>
+          <div class="feedback-layout"><article class="panel feedback-intro"><div class="feedback-icon">✉</div><h2>Your feedback matters.</h2><p>Share a bug, suggestion or question about the website or hardware. The form sends through FormSubmit to the configured inbox.</p><p class="footnote">The first submission may trigger an activation email from FormSubmit. The inbox owner must approve it before messages are delivered.</p></article>
+            <form class="panel feedback-form" id="feedbackForm"><label>Your name <input name="name" type="text" placeholder="Name (optional)"></label><label>Your email <input name="email" type="email" placeholder="Email (optional)"></label><label>Feedback type<select name="category"><option>Suggestion</option><option>Bug report</option><option>Question</option><option>Other</option></select></label><label>Message <textarea name="message" rows="5" required placeholder="Write your feedback here…"></textarea></label><button class="button button-primary" type="submit" id="feedbackSubmit">Send feedback</button><p class="form-message" id="feedbackMessage" role="status">Your message will be sent to the configured PAQSAFE feedback inbox.</p></form>
+          </div>
+        </section>
+
+        <!-- SETTINGS -->
+        <section class="page" id="page-settings">
+          <div class="page-heading"><div><p class="eyebrow">PREFERENCES</p><h1>Settings</h1><p>Adjust the dashboard and sensor alert threshold.</p></div></div>
+          <div class="settings-grid"><article class="panel settings-panel"><div class="panel-heading"><div><p class="eyebrow">DISPLAY</p><h3>Appearance</h3></div></div><label class="setting-row"><span><b>Theme</b><small>Choose how PAQSAFE looks.</small></span><select id="themeSelect"><option value="light">Light</option><option value="dark">Dark</option><option value="system">System default</option></select></label><label class="setting-row"><span><b>Reduced motion</b><small>Reduce decorative transitions.</small></span><input id="reducedMotion" type="checkbox"></label></article>
+            <article class="panel settings-panel"><div class="panel-heading"><div><p class="eyebrow">SENSOR CONFIGURATION</p><h3>Water threshold</h3></div></div><p class="muted">Raw analog readings range from 0 to 1023. PAQSAFE marks water as detected when the reading is at or above this value.</p><div class="threshold-control"><input id="thresholdInput" type="number" min="0" max="1023" value="500"><button class="button button-primary" id="saveThresholdBtn">Save threshold</button></div><p class="form-message" id="thresholdMessage">Current threshold: 500</p><p class="footnote">Calibrate this using your own dry and wet sensor readings. This threshold affects the website's displayed status; it does not alter the Arduino sketch.</p></article></div>
+        </section>
+      </div>
+      <footer class="main-footer"><span>PAQSAFE · DETECT. MONITOR. PROTECT.</span><span>Educational prototype · Live data only where connected</span></footer>
     </main>
-
   </div>
 
- 
-
-  <dialog id="parcelDialog"><form method="dialog" id="parcelForm"><div class="dialog-header"><h2>Add parcel</h2><button class="icon-button" aria-label="Close">×</button></div><label>Parcel name or ID<input id="newParcelName" required placeholder="e.g. Parcel #005"></label><label>Initial status<select id="newParcelStatus"><option value="empty">Empty</option><option value="safe">Safe</option><option value="warning">Warning</option><option value="critical">Critical</option></select></label><div class="dialog-actions"><button class="secondary-button" value="cancel">Cancel</button><button class="primary-button" id="saveParcel" value="default">Add parcel</button></div></form></dialog>
-
-  <div class="toast" id="toast"></div>
-
+  <div class="modal-backdrop" id="parcelModal" aria-hidden="true"><div class="modal"><button class="modal-close" id="modalClose" aria-label="Close">×</button><p class="eyebrow">PARCEL REGISTRY</p><h2>Add a parcel</h2><form id="addParcelForm"><label>Parcel name<input name="name" required maxlength="40" placeholder="e.g. Sample parcel"></label><label>Parcel reference<input name="reference" maxlength="24" placeholder="Optional reference"></label><p class="modal-note">New records are labelled as registry-only. They will not show sensor readings unless a physical monitoring device is separately configured.</p><button class="button button-primary" type="submit">Add parcel record</button></form></div></div>
   <script src="script.js"></script>
-
 </body>
-
 </html>
