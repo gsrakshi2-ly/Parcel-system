@@ -1,393 +1,246 @@
-/* PAQSAFE complete prototype
-   Parcel #001 = actual Arduino serial readings only.
-   Parcel #002 and #003 = labelled demo records; never treated as live.
-*/
 const $ = (id) => document.getElementById(id);
-const FEEDBACK_EMAIL = "lavenderhaz246@gmail.com"; // User-configured inbox; FormSubmit activation is required.
-const FORM_ENDPOINT = `https://formsubmit.co/ajax/${FEEDBACK_EMAIL}`;
+const state = {
+  port: null, reader: null, keepReading: false, connected: false,
+  lastReadAt: null, distance: null, water: null, waterDetected: null,
+  distanceHistory: [], waterHistory: [], activities: [],
+  threshold: 500, compact: false, showDemo: true, startedAt: Date.now()
+};
 
-let port = null, reader = null, connected = false, lineBuffer = "";
-let lastDistance = null, lastWater = null, lastReadingTime = null;
-let threshold = Number(localStorage.getItem("paq_threshold") || 500);
-let readings = [];
-let activity = [];
-let parcels = [
-  { id: "001", name: "Monitored Parcel", reference: "LIVE DEVICE", kind: "live", created: "Primary monitoring parcel" },
-  { id: "002", name: "Sample Parcel", reference: "DEMO RECORD", kind: "demo", created: "Illustrative example only" },
-  { id: "003", name: "Sample Parcel", reference: "DEMO RECORD", kind: "demo", created: "Illustrative example only" }
+const parcels = [
+  {id:'001', name:'Parcel #001', source:'ARDUINO', status:'Not connected', detail:'Live hardware parcel'},
+  {id:'002', name:'Parcel #002', source:'DEMO', status:'Safe', detail:'Illustrative demo parcel'},
+  {id:'003', name:'Parcel #003', source:'DEMO', status:'Warning', detail:'Illustrative demo parcel'},
+  {id:'004', name:'Parcel #004', source:'EMPTY', status:'Empty', detail:'No parcel registered'}
 ];
 
-function setConnectionState(on, message = "") {
-  connected = on;
-  $("sideDot").classList.toggle("on", on);
-  $("topDot").classList.toggle("on", on);
-  $("sideConnection").textContent = on ? "Device connected" : "Device offline";
-  $("topConnection").textContent = on ? "Device connected" : "Device offline";
-  $("overviewConnection").textContent = on ? "Connected" : "Offline";
-  $("overviewConnectionHint").textContent = on ? "Arduino UNO · USB serial" : "Connect Arduino by USB";
-  $("homeDeviceStatus").textContent = on ? "Arduino connected" : "Not connected";
-  $("homeDeviceDescription").textContent = on ? "Receiving serial data for Parcel #001." : "Connect the Arduino UNO to begin receiving sensor readings.";
-  $("monitorConnectionDetail").textContent = on ? "Connected" : "Disconnected";
-  $("analyticsConnection").textContent = on ? "Connected" : "Offline";
-  $("devicePageStatus").textContent = on ? "Arduino connected" : "Not connected";
-  $("monitorStatus").textContent = on ? "DEVICE CONNECTED" : "NOT CONNECTED";
-  $("monitorDeviceDot").style.background = on ? "#36a979" : "#aab8bd";
-  $("deviceConnectBtn").disabled = on;
-  $("deviceDisconnectBtn").disabled = !on;
-  $("devicePageMessage").textContent = message || (on ? "Serial connection active. Waiting for readings…" : "Ready to connect. Close Arduino Serial Monitor first.");
-  $("homeDeviceStatus").textContent = on ? "Arduino connected" : "Not connected";
-  renderHomeParcels();
-  renderRegistry();
+function toast(message){
+  const el=$('toast'); el.textContent=message; el.classList.add('show');
+  clearTimeout(toast.timer); toast.timer=setTimeout(()=>el.classList.remove('show'),2800);
 }
-
-function showEmptyLiveValues() {
-  ["overviewDistance","monitorDistance","analyticsDistance"].forEach(id => $(id).textContent = "—");
-  ["overviewWater","monitorWaterRaw","analyticsWater"].forEach(id => $(id).textContent = "—");
-  $("overviewWaterHint").textContent = "Waiting for readings";
-  $("monitorWaterStatus").textContent = "Waiting for sensor data";
-  $("monitorRisk").textContent = "Unknown";
-  $("monitorRisk").style.color = "";
-  $("monitorLastReading").textContent = "No reading received";
-  $("overviewUpdated").textContent = "Waiting for device data";
-  $("monitorThreshold").textContent = String(threshold);
-  $("riskHeadline").textContent = "Waiting for sensor data";
-  $("riskDescription").textContent = "Connect the Arduino to assess water sensor readings for Parcel #001.";
-  $("analyticsCount").textContent = "0";
-  $("distanceEmpty").style.display = "grid";
-  $("waterEmpty").style.display = "grid";
-  drawCharts();
-}
-
-function addActivity(title, detail, isAlert = false) {
-  activity.unshift({ title, detail, isAlert, time: new Date() });
-  activity = activity.slice(0, 50);
+function addActivity(message, symbol='✓'){
+  const item={message,symbol,time:new Date()};
+  state.activities.unshift(item); state.activities=state.activities.slice(0,30);
   renderActivity();
 }
-
-function handleSensorData(obj) {
-  const distance = Number(obj.distance_cm);
-  const water = Number(obj.water_raw);
-  if (!Number.isFinite(distance) || !Number.isFinite(water) || water < 0 || water > 1023) return;
-
-  if (distance >= 0 && distance <= 450) {
-    lastDistance = distance;
-    $("overviewDistance").textContent = distance.toFixed(1);
-    $("monitorDistance").textContent = distance.toFixed(1);
-    $("analyticsDistance").textContent = distance.toFixed(1);
-  } else {
-    lastDistance = null;
-    $("overviewDistance").textContent = "—";
-    $("monitorDistance").textContent = "—";
-    $("analyticsDistance").textContent = "—";
-  }
-
-  lastWater = Math.round(water);
-  $("overviewWater").textContent = lastWater >= threshold ? "Detected" : "No water";
-  $("overviewWaterHint").textContent = `Raw value: ${lastWater}`;
-  $("monitorWaterRaw").textContent = String(lastWater);
-  $("analyticsWater").textContent = String(lastWater);
-
-  const wet = lastWater >= threshold;
-  $("monitorRisk").textContent = wet ? "Water detected" : "No water detected";
-  $("monitorRisk").style.color = wet ? "#bd7048" : "#268b65";
-  $("monitorWaterStatus").textContent = wet ? "Above configured threshold" : "Below configured threshold";
-  $("monitorWaterStatus").style.color = wet ? "#bd7048" : "#268b65";
-  $("riskHeadline").textContent = wet ? "Water threshold exceeded" : "No water detected";
-  $("riskDescription").textContent = wet
-    ? `Parcel #001 water sensor reading (${lastWater}) is at or above the configured threshold (${threshold}).`
-    : `Parcel #001 water sensor reading (${lastWater}) is below the configured threshold (${threshold}).`;
-
-  lastReadingTime = new Date();
-  $("monitorLastReading").textContent = lastReadingTime.toLocaleTimeString();
-  $("overviewUpdated").textContent = `Updated ${lastReadingTime.toLocaleTimeString()}`;
-  readings.push({ time: lastReadingTime, distance: lastDistance, water: lastWater });
-  if (readings.length > 60) readings.shift();
-  $("analyticsCount").textContent = String(readings.length);
-  $("distanceEmpty").style.display = readings.some(r => r.distance !== null) ? "none" : "grid";
-  $("waterEmpty").style.display = "none";
-  renderCharts();
-
-  const previous = activity[0];
-  if (!previous || (wet !== previous.isAlert)) {
-    addActivity(wet ? "Water threshold exceeded" : "Water reading below threshold",
-      `Parcel #001 · Raw value ${lastWater} · Threshold ${threshold}`, wet);
-  }
+function timeAgo(date){
+  const seconds=Math.max(0,Math.floor((Date.now()-date.getTime())/1000));
+  if(seconds<60)return `${seconds} sec ago`;
+  if(seconds<3600)return `${Math.floor(seconds/60)} min ago`;
+  return `${Math.floor(seconds/3600)} hr ago`;
 }
-
-function parseSerialLine(line) {
-  const clean = line.trim();
-  if (!clean) return;
-  try {
-    const obj = JSON.parse(clean);
-    handleSensorData(obj);
-  } catch (error) {
-    console.warn("PAQSAFE ignored non-JSON serial line:", clean);
-  }
+function renderActivity(){
+  const html=state.activities.length ? state.activities.map(a=>`<div class="activity-item"><span class="activity-symbol">${escapeHTML(a.symbol)}</span><span>${escapeHTML(a.message)}</span><small>${timeAgo(a.time)}</small></div>`).join('') : '<p class="muted">No activity recorded in this browser session.</p>';
+  $('activityPreview').innerHTML=html; $('fullActivity').innerHTML=html;
 }
-
-async function connectArduino() {
-  if (!("serial" in navigator)) {
-    $("devicePageMessage").textContent = "Web Serial is unavailable. Open this HTTPS site in Chrome or Edge.";
-    return;
-  }
-  try {
-    port = await navigator.serial.requestPort();
-    await port.open({ baudRate: 9600 });
-    connected = true;
-    setConnectionState(true, "Connected. Waiting for the first valid sensor reading…");
-    addActivity("Arduino connected", "USB serial connection opened for Parcel #001.", false);
-    reader = port.readable.getReader();
-    const decoder = new TextDecoder();
-    while (connected && reader) {
-      const { value, done } = await reader.read();
-      if (done) break;
-      if (value) {
-        lineBuffer += decoder.decode(value, { stream: true });
-        const lines = lineBuffer.split(/\r?\n/);
-        lineBuffer = lines.pop() || "";
-        lines.forEach(parseSerialLine);
-      }
-    }
-  } catch (error) {
-    console.error(error);
-    const message = error.name === "NotFoundError" ? "No serial device was selected." :
-      error.name === "SecurityError" ? "Serial access was blocked. Use HTTPS and allow serial permissions." :
-      "Connection failed. Check the USB cable and close Arduino Serial Monitor.";
-    $("devicePageMessage").textContent = message;
-    if (connected) await disconnectArduino(false);
-    else setConnectionState(false, message);
-  }
+function escapeHTML(value){
+  return String(value).replace(/[&<>"']/g, c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
+function parcelMarkup(p){
+  let badge = p.id==='001' ? (state.connected?'Connected':'Not connected') : p.status;
+  let badgeClass = p.id==='003'?'warn-badge':(p.id==='004'?'empty-badge':'safe-badge');
+  return `<article class="parcel-card ${p.id==='002'||p.id==='003'?'demo-parcel':''}" data-parcel="${p.id}" tabindex="0">
+    <div class="parcel-thumb">${p.id==='004'?'＋':'<div class="parcel-illustration"><span></span></div>'}</div>
 
-async function disconnectArduino(logEvent = true) {
-  const wasConnected = connected;
-  connected = false;
-  try {
-    if (reader) {
-      await reader.cancel();
-      reader.releaseLock();
-      reader = null;
-    }
-  } catch (e) { console.warn(e); }
-  try {
-    if (port) {
-      await port.close();
-      port = null;
-    }
-  } catch (e) { console.warn(e); }
-  lineBuffer = "";
-  lastDistance = null;
-  lastWater = null;
-  showEmptyLiveValues();
-  setConnectionState(false, "Disconnected. Parcel #001 is waiting for the Arduino.");
-  if (logEvent && wasConnected) addActivity("Arduino disconnected", "No live readings are currently being received.", false);
+    <div class="parcel-info"><b>${p.name}${p.source==='DEMO'?'<span class="demo-badge">DEMO</span>':''}</b><small>${p.id==='001'?(state.lastReadAt?'Last update: '+timeAgo(state.lastReadAt):'Waiting for Arduino'):(p.id==='004'?'No parcel added':'Sample parcel')}</small></div>
+    <span class="status-badge ${badgeClass}">${badge}</span></article>`;
 }
-
-function navigate(page) {
-  const valid = ["home","registry","monitor","risk","analytics","discover","about","device","feedback","settings"];
-  if (!valid.includes(page)) page = "home";
-  document.querySelectorAll(".page").forEach(p => p.classList.toggle("active", p.id === `page-${page}`));
-  document.querySelectorAll(".nav-link").forEach(a => a.classList.toggle("active", a.dataset.page === page));
-  const labels = {home:"Overview",registry:"Parcel Registry",monitor:"Parcel Monitor",risk:"Risk Center",analytics:"Analytics",discover:"Discover",about:"About Us",device:"Device Connection",feedback:"Feedback",settings:"Settings"};
-  $("pageCrumb").textContent = labels[page];
-  $("sidebar").classList.remove("open");
-  if (page === "analytics") renderCharts();
-  if (page === "registry") renderRegistry();
-  if (page === "home") renderHomeParcels();
-}
-window.addEventListener("hashchange", () => navigate(location.hash.replace("#","") || "home"));
-document.querySelectorAll(".nav-link").forEach(a => a.addEventListener("click", () => navigate(a.dataset.page)));
-document.querySelectorAll('a[href^="#"]').forEach(a => {
-  if (!a.dataset.page && a.getAttribute("href").length > 1) a.addEventListener("click", () => {
-    const target = a.getAttribute("href").slice(1);
-    if (document.getElementById(`page-${target}`)) navigate(target);
+function renderParcels(){
+  $('parcelGrid').innerHTML=parcels.map(parcelMarkup).join('');
+  $('registryList').innerHTML=parcels.map(p=>`<article class="registry-card"><h3>${p.name} ${p.source==='DEMO'?'<span class="demo-badge">DEMO</span>':''}</h3><p>${p.detail}</p><span class="status-badge ${p.id==='003'?'warn-badge':p.id==='004'?'empty-badge':'safe-badge'}">${p.id==='001'?(state.connected?'Connected':'Not connected'):p.status}</span></article>`).join('');
+  document.querySelectorAll('[data-parcel]').forEach(card=>{
+    const open=()=>{const id=card.dataset.parcel; if(id==='001')navigate('monitor'); else toast(`Parcel #${id} is ${id==='004'?'empty':'a demo record'}.`);};
+    card.addEventListener('click',open); card.addEventListener('keydown',e=>{if(e.key==='Enter')open();});
   });
-});
-
-function renderHomeParcels() {
-  const host = $("homeParcelList");
-  if (!host) return;
-  host.innerHTML = parcels.slice(0, 5).map(p => {
-    const isLive = p.kind === "live";
-    const label = isLive ? (connected ? "DEVICE CONNECTED" : "NOT CONNECTED") : "DEMO VERSION";
-    return `<div class="home-parcel-row"><div class="parcel-thumb ${isLive ? "" : "demo"}">${p.id}</div><div class="parcel-row-main"><b>Parcel #${p.id} · ${escapeHTML(p.name)}</b><small>${isLive ? "Arduino UNO · Real sensor data only" : "Sample record · No sensor connected"}</small></div><span class="row-state ${isLive && connected ? "live" : ""}">${label}</span></div>`;
-  }).join("");
-  $("parcelCount").textContent = String(parcels.length);
+  document.querySelectorAll('.demo-parcel').forEach(el=>el.classList.toggle('hidden-demo',!state.showDemo));
 }
-
-function renderRegistry() {
-  const host = $("registryGrid");
-  if (!host) return;
-  const query = ($("parcelSearch")?.value || "").toLowerCase();
-  const shown = parcels.filter(p => `${p.id} ${p.name} ${p.reference}`.toLowerCase().includes(query));
-  host.innerHTML = shown.map(p => {
-    const live = p.kind === "live";
-    const status = live ? (connected ? "DEVICE CONNECTED" : "NOT CONNECTED") : "DEMO VERSION";
-    return `<article class="registry-card ${live ? "live-record" : ""}"><div class="card-top"><span class="parcel-id">PARCEL #${p.id}</span><span class="${live ? "status-pill" : "soft-tag"}">${status}</span></div><div class="parcel-thumb ${live ? "" : "demo"}" style="width:48px;height:48px;margin-top:18px">${p.id}</div><h3>${escapeHTML(p.name)}</h3><p>${live ? "Assigned to Arduino UNO. Actual readings appear in Parcel Monitor when connected." : "Registry/demo record only. No physical sensor is assigned and no live values are shown."}</p><div class="card-actions"><span class="row-state">${escapeHTML(p.reference)}</span>${p.id !== "001" ? `<button class="tiny-btn danger" data-remove="${p.id}">Remove</button>` : `<a class="tiny-btn" href="#device">Device settings →</a>`}</div></article>`;
-  }).join("") || `<div class="empty-state">No matching parcel records.</div>`;
-  host.querySelectorAll("[data-remove]").forEach(btn => btn.addEventListener("click", () => {
-    const id = btn.dataset.remove;
-    parcels = parcels.filter(p => p.id !== id);
-    renderRegistry(); renderHomeParcels();
-  }));
+function updateDashboard(){
+  const live=state.connected;
+  $('totalCount').textContent='4';
+  $('protectedCount').textContent=live?'1':'0';
+  $('riskCount').textContent=state.waterDetected===true?'1':(live?'0':'—');
+  $('deviceCount').textContent=live?'1':'0';
+  $('safeLegend').textContent=live?'1':'0';
+  $('warningLegend').textContent=state.waterDetected===true?'1':'0';
+  $('criticalLegend').textContent='0';
+  $('safePercent').textContent=live?(state.waterDetected===true?'0%':'100%'):'—';
+  $('riskDonut').style.background=live?(state.waterDetected===true?'conic-gradient(#f2bd91 0deg 360deg)':'conic-gradient(#46b7a6 0deg 360deg)'):'conic-gradient(#c8d8ec 0deg 360deg)';
+  $('systemStatus').textContent=live?'System Online':'System Ready';
+  $('systemDot').style.background=live?'#22a879':'#8aa6c8';
+  $('sensorStatus').textContent=live?'Receiving':'Waiting';
+  $('connectionStatus').textContent=live?'Connected':'Not connected';
+  $('lastCheck').textContent=state.lastReadAt?timeAgo(state.lastReadAt):'—';
+  $('uptime').textContent=live?formatUptime(Date.now()-state.startedAt):'—';
+  $('alertCount').textContent=state.waterDetected===true?'1':'0';
+  $('connectionState').textContent='Status: '+(live?'Connected to Arduino':'Not connected');
+  $('connectButton').disabled=live; $('disconnectButton').disabled=!live;
+  $('monitorConnect').textContent=live?'Arduino Connected':'Connect Arduino →';
+  $('p1Badge').textContent=live?'Connected':'Not connected';
+  $('p1Badge').className='status-badge '+(live?'safe-badge':'empty-badge');
+  $('liveMessage').textContent=live?'Receiving serial data from Arduino UNO R3.':'Connect the Arduino by USB, then choose its port in the browser prompt.';
+  $('analyticsDistance').textContent=state.distance==null?'—':`${state.distance} cm`;
+  $('analyticsWater').textContent=state.water==null?'—':state.water;
+  $('analyticsUpdate').textContent=state.lastReadAt?timeAgo(state.lastReadAt):'—';
+  renderParcels();
 }
-function escapeHTML(value) {
-  return String(value).replace(/[&<>"']/g, c => ({"&":"&amp;","<":"&lt;",">":"&gt;",'"':"&quot;","'":"&#39;"}[c]));
-}
+function formatUptime(ms){
 
-$("addParcelBtn").addEventListener("click", () => {
-  $("parcelModal").classList.add("open");
-  $("parcelModal").setAttribute("aria-hidden","false");
-});
-function closeModal() {
-  $("parcelModal").classList.remove("open");
-  $("parcelModal").setAttribute("aria-hidden","true");
+  const mins=Math.floor(ms/60000), hrs=Math.floor(mins/60);
+  return hrs?`${hrs} h ${mins%60} min`:`${mins} min`;
 }
-$("modalClose").addEventListener("click", closeModal);
-$("parcelModal").addEventListener("click", e => { if (e.target === $("parcelModal")) closeModal(); });
-$("addParcelForm").addEventListener("submit", e => {
-  e.preventDefault();
-  const fd = new FormData(e.currentTarget);
-  const id = String(Math.max(3, ...parcels.map(p => Number(p.id))) + 1).padStart(3,"0");
-  parcels.push({id, name:fd.get("name").trim(), reference:fd.get("reference").trim() || "REGISTRY ONLY", kind:"demo", created:"Registry-only record"});
-  e.currentTarget.reset(); closeModal(); renderRegistry(); renderHomeParcels();
-});
+function setSensorReadings(){
+  $('distanceValue').textContent=state.distance==null?'—':`${state.distance} cm`;
+  $('waterValue').textContent=state.water==null?'—':state.water;
+  const detected=state.waterDetected;
+  $('waterDetected').textContent=detected===null?'Awaiting data':detected?'Water indicated':'No water indicated';
+  $('waterDetailValue').textContent=state.water==null?'—':state.water;
+  $('waterDetailState').textContent=detected===null?'Awaiting Arduino data':detected?'Water indicated':'No water indicated';
+  $('lastCheck').textContent=state.lastReadAt?timeAgo(state.lastReadAt):'—';
+  $('chartNote').textContent=state.distanceHistory.length?'Trend uses readings received during this browser session only.':'Trend appears when live sensor data is received. No historical readings are invented.';
+  updateChart();
+}
+function updateChart(){
+  const makePath=(arr)=>{
+    if(arr.length<2)return '';
+    const vals=arr.slice(-9), min=Math.min(...vals), max=Math.max(...vals), span=max-min||1;
+    return vals.map((v,i)=>`${i?'L':'M'}${42+i*(543/(vals.length-1))} ${135-((v-min)/span)*85}`).join(' ');
+  };
+  if(state.distanceHistory.length>1)$('distancePath').setAttribute('d',makePath(state.distanceHistory));
+  if(state.waterHistory.length>1)$('waterPath').setAttribute('d',makePath(state.waterHistory));
+}
+function normalizeKey(k){return String(k).toLowerCase().replace(/[^a-z0-9]/g,'');}
+function findValue(obj, names){
+  if(!obj||typeof obj!=='object')return undefined;
+  const entries=Object.entries(obj).map(([k,v])=>[normalizeKey(k),v]);
+  for(const name of names){const hit=entries.find(([k])=>k===normalizeKey(name));if(hit)return hit[1];}
+  return undefined;
+}
+function toNumber(v){
+  if(typeof v==='number'&&Number.isFinite(v))return v;
+  if(typeof v==='string'){const m=v.replace(',','.').match(/-?\d+(?:\.\d+)?/);if(m)return Number(m[0]);}
+  return null;
+}
+function applyReading(data){
+  let distance=null, water=null, detected=null;
+  if(typeof data==='string'){
+    const d=data.match(/distance\s*:\s*(-?\d+(?:[.,]\d+)?)\s*cm/i);
+    const w=data.match(/water(?:\s+reading|\s+level)?\s*:\s*(-?\d+)/i);
+    if(d)distance=toNumber(d[1]); if(w)water=toNumber(w[1]);
+    if(/distance\s*:\s*no\s*echo/i.test(data))distance=null;
 
-function renderActivity() {
-  const host = $("activityLog");
-  if (!activity.length) {
-    host.innerHTML = `<div class="empty-state">No device events recorded yet.</div>`;
-    return;
+  }else if(data&&typeof data==='object'){
+    distance=toNumber(findValue(data,['distance','distanceCm','ultrasonicDistance','distanceReading']));
+    water=toNumber(findValue(data,['water','waterLevel','waterReading','waterValue','analogValue']));
+    const flag=findValue(data,['waterDetected','isWaterDetected','waterAlert']);
+    if(typeof flag==='boolean')detected=flag;
+    else if(typeof flag==='string' && /^(true|false|yes|no|1|0)$/i.test(flag))detected=/^(true|yes|1)$/i.test(flag);
   }
-  host.innerHTML = activity.map(item => `<div class="log-row"><span class="log-dot ${item.isAlert ? "alert" : ""}"></span><div class="log-main"><b>${escapeHTML(item.title)}</b><small>${escapeHTML(item.detail)} · ${item.time.toLocaleTimeString()}</small></div></div>`).join("");
+  let changed=false;
+  if(distance!==null){state.distance=distance;state.distanceHistory.push(distance);state.distanceHistory=state.distanceHistory.slice(-30);changed=true;}
+  if(water!==null){state.water=water;state.waterHistory.push(water);state.waterHistory=state.waterHistory.slice(-30);changed=true;}
+  if(detected!==null)state.waterDetected=detected;
+  else if(water!==null)state.waterDetected=water>=state.threshold;
+  if(changed){
+    state.lastReadAt=new Date();
+    $('diagnosticDetail').textContent='Valid sensor data received from Parcel #001.';
+    setSensorReadings(); updateDashboard();
+  }
 }
-$("clearLogBtn").addEventListener("click", () => { activity = []; renderActivity(); });
-
-function drawOneChart(canvasId, key, thresholdLine = null) {
-  const canvas = $(canvasId);
-  if (!canvas) return;
-  const rect = canvas.getBoundingClientRect();
-  const width = Math.max(260, rect.width || 500);
-  const height = 210;
-  const dpr = window.devicePixelRatio || 1;
-  canvas.width = width * dpr; canvas.height = height * dpr;
-  const ctx = canvas.getContext("2d");
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,width,height);
-  const vals = readings.map(r => r[key]).filter(v => v !== null && Number.isFinite(v));
-  if (!vals.length) return;
-  const pad = {l:32,r:12,t:15,b:25};
-  const max = key === "water" ? 1023 : Math.max(10, Math.ceil(Math.max(...vals) / 10) * 10);
-  const min = 0;
-  const plotW = width-pad.l-pad.r, plotH = height-pad.t-pad.b;
-  ctx.strokeStyle = "#e8eff1"; ctx.lineWidth = 1;
-  for (let i=0;i<4;i++) {
-    const y = pad.t + plotH*i/3;
-    ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();
-  }
-  ctx.fillStyle = "#94a5ac";ctx.font="9px DM Sans";
-  for (let i=0;i<4;i++) {
-    const val = max - max*i/3;
-    ctx.fillText(String(Math.round(val)),2,pad.t+plotH*i/3+3);
-  }
-  if (thresholdLine !== null && thresholdLine <= max) {
-    const y = pad.t + plotH*(1-thresholdLine/max);
-    ctx.setLineDash([4,4]);ctx.strokeStyle="#d69a75";ctx.beginPath();ctx.moveTo(pad.l,y);ctx.lineTo(width-pad.r,y);ctx.stroke();ctx.setLineDash([]);
-  }
-  const points = readings.map((r,i)=>({i,v:r[key]})).filter(p=>p.v!==null&&Number.isFinite(p.v));
-  if (points.length === 1) {
-    const x=pad.l+plotW/2, y=pad.t+plotH*(1-points[0].v/max);
-    ctx.fillStyle="#278da1";ctx.beginPath();ctx.arc(x,y,4,0,Math.PI*2);ctx.fill();return;
-  }
-  ctx.strokeStyle="#278da1";ctx.lineWidth=2;ctx.lineJoin="round";ctx.beginPath();
-  points.forEach((p,j)=>{const x=pad.l+plotW*(p.i/Math.max(1,readings.length-1));const y=pad.t+plotH*(1-p.v/max);if(j===0)ctx.moveTo(x,y);else ctx.lineTo(x,y);});
-  ctx.stroke();
-  points.forEach(p=>{const x=pad.l+plotW*(p.i/Math.max(1,readings.length-1));const y=pad.t+plotH*(1-p.v/max);ctx.fillStyle="#fff";ctx.strokeStyle="#278da1";ctx.lineWidth=2;ctx.beginPath();ctx.arc(x,y,3,0,Math.PI*2);ctx.fill();ctx.stroke();});
+function parseSerialLine(line){
+  const clean=line.trim(); if(!clean)return;
+  try{const parsed=JSON.parse(clean);applyReading(parsed);return;}catch(_){}
+  applyReading(clean);
 }
-function renderCharts() {
-  drawOneChart("distanceChart","distance");
-  drawOneChart("waterChart","water",threshold);
-}
-function drawCharts(){ renderCharts(); }
-window.addEventListener("resize", () => { if ($("page-analytics").classList.contains("active")) renderCharts(); });
+async function connectArduino(){
+  if(!('serial' in navigator)){toast('Web Serial is not supported here. Use desktop Chrome or Edge over HTTPS.');return;}
+  try{
+    state.port=await navigator.serial.requestPort();
+    await state.port.open({baudRate:9600});
+    state.connected=true; state.keepReading=true;
+    updateDashboard(); addActivity('Arduino UNO R3 connected to Parcel #001','✓');
+    toast('Arduino connected. Waiting for sensor readings.');
+    const decoder=new TextDecoderStream();
+    state.port.readable.pipeTo(decoder.writable).catch(()=>{});
+    state.reader=decoder.readable.getReader();
+    let buffer='';
+    while(state.keepReading){
+      const {value,done}=await state.reader.read();
+      if(done)break;
+      buffer+=value;
+      let newline;
+      while((newline=buffer.indexOf('\n'))>=0){
+        const line=buffer.slice(0,newline).replace(/\r/g,'');
 
-$("parcelSearch").addEventListener("input", renderRegistry);
-$("deviceConnectBtn").addEventListener("click", connectArduino);
-$("disconnectBtn").addEventListener("click", () => disconnectArduino());
-$("deviceDisconnectBtn").addEventListener("click", () => disconnectArduino());
-$("menuBtn").addEventListener("click", () => $("sidebar").classList.toggle("open"));
-
-$("themeSelect").value = localStorage.getItem("paq_theme") || "light";
-function applyTheme(theme) {
-  const dark = theme === "dark" || (theme === "system" && window.matchMedia && window.matchMedia("(prefers-color-scheme: dark)").matches);
-  document.body.classList.toggle("dark", dark);
-  localStorage.setItem("paq_theme", theme);
-}
-$("themeSelect").addEventListener("change", e => applyTheme(e.target.value));
-applyTheme($("themeSelect").value);
-$("reducedMotion").checked = localStorage.getItem("paq_reduced_motion") === "true";
-document.body.classList.toggle("reduced-motion", $("reducedMotion").checked);
-$("reducedMotion").addEventListener("change", e => {
-  document.body.classList.toggle("reduced-motion", e.target.checked);
-  localStorage.setItem("paq_reduced_motion", String(e.target.checked));
-});
-$("thresholdInput").value = threshold;
-$("thresholdMessage").textContent = `Current threshold: ${threshold}`;
-$("monitorThreshold").textContent = String(threshold);
-$("saveThresholdBtn").addEventListener("click", () => {
-  const n = Number($("thresholdInput").value);
-  if (!Number.isInteger(n) || n < 0 || n > 1023) {
-    $("thresholdMessage").textContent = "Enter a whole number from 0 to 1023.";
-    return;
-  }
-  threshold = n; localStorage.setItem("paq_threshold", String(n));
-  $("thresholdMessage").textContent = `Threshold saved: ${threshold}`;
-  $("monitorThreshold").textContent = String(threshold);
-  if (lastWater !== null) {
-    // Re-evaluate the latest received reading against the updated threshold.
-    const wet = lastWater >= threshold;
-    $("monitorRisk").textContent = wet ? "Water detected" : "No water detected";
-    $("monitorRisk").style.color = wet ? "#bd7048" : "#268b65";
-    $("overviewWater").textContent = wet ? "Detected" : "No water";
-    $("monitorWaterStatus").textContent = wet ? "Above configured threshold" : "Below configured threshold";
-    $("riskHeadline").textContent = wet ? "Water threshold exceeded" : "No water detected";
-    $("riskDescription").textContent = `Parcel #001 raw reading ${lastWater}; configured threshold ${threshold}.`;
-  }
-  renderCharts();
-});
-
-$("feedbackForm").addEventListener("submit", async e => {
-  e.preventDefault();
-  const btn = $("feedbackSubmit"), msg = $("feedbackMessage");
-  btn.disabled = true; btn.textContent = "Sending…"; msg.textContent = "Sending your feedback…";
-  const formData = new FormData(e.currentTarget);
-  formData.append("_subject","PAQSAFE website feedback");
-  formData.append("_template","table");
-  try {
-    const response = await fetch(FORM_ENDPOINT, {
-      method:"POST",
-      headers:{"Accept":"application/json"},
-      body:formData
-    });
-    const result = await response.json();
-    if (response.ok && (result.success === "true" || result.success === true)) {
-      msg.textContent = "Feedback submitted. If this is the first submission, check the inbox for a FormSubmit activation email.";
-      e.currentTarget.reset();
-    } else {
-      msg.textContent = "The service did not confirm delivery. Check the inbox activation email and try again.";
+        buffer=buffer.slice(newline+1);
+        parseSerialLine(line);
+      }
+      if(buffer.length>4000){parseSerialLine(buffer);buffer='';}
     }
-  } catch (error) {
-    msg.textContent = "Could not send from this browser. Check your internet connection and FormSubmit activation.";
-  } finally {
-    btn.disabled = false; btn.textContent = "Send feedback";
+  }catch(err){
+    if(err&&err.name==='NotFoundError'){toast('No serial port was selected.');}
+    else{console.error(err);toast('Connection could not be opened. Check the USB cable and port.');}
+    state.connected=false; updateDashboard();
   }
+}
+async function disconnectArduino(){
+  state.keepReading=false;
+  try{if(state.reader){await state.reader.cancel();state.reader.releaseLock();}}catch(_){}
+  state.reader=null;
+  try{if(state.port){await state.port.close();}}catch(_){}
+  state.port=null;state.connected=false;
+  updateDashboard();addActivity('Arduino disconnected from Parcel #001','↔');toast('Arduino disconnected.');
+}
+function navigate(page){
+  document.querySelectorAll('.page').forEach(p=>p.classList.remove('active'));
+  const target=$(`page-${page}`);if(target)target.classList.add('active');
+  document.querySelectorAll('.nav-link').forEach(b=>b.classList.toggle('active',b.dataset.page===page));
+  $('sidebar').classList.remove('open');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+document.querySelectorAll('[data-page]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.page)));
+document.querySelectorAll('[data-go]').forEach(b=>b.addEventListener('click',()=>navigate(b.dataset.go)));
+$('connectButton').addEventListener('click',connectArduino);
+$('monitorConnect').addEventListener('click',connectArduino);
+$('disconnectButton').addEventListener('click',disconnectArduino);
+$('mobileMenu').addEventListener('click',()=>$('sidebar').classList.toggle('open'));
+$('alertButton').addEventListener('click',()=>navigate('risk'));
+$('profileButton').addEventListener('click',()=>navigate('settings'));
+$('clearActivity').addEventListener('click',()=>{state.activities=[];renderActivity();toast('Browser activity cleared.');});
+$('globalSearch').addEventListener('input',e=>{
+  const q=e.target.value.toLowerCase().trim();
+  if(!q)return;
+  const match=parcels.find(p=>(p.name+' '+p.source+' '+p.status).toLowerCase().includes(q));
+  if(match){navigate(match.id==='001'?'monitor':'registry');}
 });
+document.querySelectorAll('[data-range]').forEach(b=>b.addEventListener('click',()=>{
 
-window.addEventListener("beforeunload", () => { try { if (reader) reader.cancel(); } catch(e){} });
-renderHomeParcels();
-renderRegistry();
-renderActivity();
-showEmptyLiveValues();
-setConnectionState(false, "Ready to connect. Close Arduino Serial Monitor first.");
-navigate(location.hash.replace("#","") || "home");
+  document.querySelectorAll('[data-range]').forEach(x=>x.classList.remove('selected'));b.classList.add('selected');
+  $('chartNote').textContent='Selected range: '+b.dataset.range+'. Only current-session readings are plotted; no historical values are generated.';
+}));
+$('saveSettings').addEventListener('click',()=>{
+  state.compact=$('compactSetting').checked;state.showDemo=$('demoSetting').checked;
+  const n=Number($('thresholdSetting').value);
+  if(Number.isFinite(n)&&n>=1&&n<=1023)state.threshold=n;
+  document.body.classList.toggle('compact',state.compact);
+  localStorage.setItem('paqSafeSettings',JSON.stringify({compact:state.compact,showDemo:state.showDemo,threshold:state.threshold}));
+  if(state.water!==null&&state.waterDetected===null)state.waterDetected=state.water>=state.threshold;
+  renderParcels();updateDashboard();$('settingsStatus').textContent='Settings saved in this browser.';toast('Settings saved.');
+});
+(function loadSettings(){
+  try{const s=JSON.parse(localStorage.getItem('paqSafeSettings')||'{}');
+    state.compact=!!s.compact;state.showDemo=s.showDemo!==false;state.threshold=Number(s.threshold)||500;
+    $('compactSetting').checked=state.compact;$('demoSetting').checked=state.showDemo;$('thresholdSetting').value=state.threshold;
+    document.body.classList.toggle('compact',state.compact);
+  }catch(_){}
+})();
+$('feedbackForm').addEventListener('submit',e=>{
+  if(!e.currentTarget.reportValidity())return;
+  $('feedbackStatus').textContent='Opening the feedback submission. If this is the first submission, verify the receiving email with FormSubmit.';
+});
+if('serial' in navigator){
+  navigator.serial.addEventListener('disconnect',()=>{
+    state.keepReading=false;state.connected=false;state.port=null;state.reader=null;
+    updateDashboard();addActivity('Arduino serial device disconnected','!');toast('Arduino device disconnected.');
+  });
+}
+renderActivity();renderParcels();updateDashboard();setSensorReadings();
 
